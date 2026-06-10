@@ -1,0 +1,161 @@
+<!--
+  SWIFT KEYS — Typing Speed Test
+  ================================
+  Instructions:
+    - A passage appears on screen. Start typing to begin the timer.
+    - Correct characters turn green; errors turn red.
+    - Your WPM and accuracy are shown live.
+    - Press Tab or click Retry to reset with a new passage.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swift Keys — Typing Speed</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0c0f1a; color: #d0d8ff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh; padding: 36px 24px;
+}
+h1 { font-size: 1.9rem; letter-spacing: .15em; color: #ffd080; margin-bottom: 4px; }
+.subtitle { font-size: .8rem; color: #334; margin-bottom: 28px; letter-spacing: .05em; }
+.stats-row {
+  display: flex; gap: 40px; margin-bottom: 28px;
+}
+.stat { text-align: center; }
+.stat-value { font-size: 1.8rem; font-weight: 700; color: #ffd080; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: .7rem; color: #445; text-transform: uppercase; letter-spacing: .08em; }
+#passage-wrap {
+  max-width: 640px; width: 100%;
+  background: #13161f; border: 1px solid #222a3a;
+  border-radius: 10px; padding: 24px 28px;
+  font-size: 1.15rem; line-height: 1.85;
+  letter-spacing: .03em; margin-bottom: 20px;
+  font-family: 'Courier New', monospace;
+  min-height: 120px;
+}
+.char { position: relative; transition: color .08s; }
+.char.correct { color: #80cc90; }
+.char.wrong   { color: #ff6060; text-decoration: underline; background: rgba(255,60,60,.15); border-radius: 2px; }
+.char.cursor::after {
+  content: '';
+  position: absolute; left: 0; top: 2px; bottom: 2px; width: 2px;
+  background: #ffd080;
+  animation: blink .7s step-end infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+#input {
+  max-width: 640px; width: 100%;
+  background: #13161f; border: 1px solid #222a3a;
+  border-radius: 8px; padding: 14px 18px;
+  font-size: 1rem; color: #d0d8ff;
+  font-family: 'Courier New', monospace;
+  outline: none; resize: none;
+  margin-bottom: 16px;
+}
+#input:focus { border-color: #ffd080; }
+.actions { display: flex; gap: 12px; align-items: center; }
+.btn { background: #2a2010; color: #ffd080; border: 1px solid #5a4010; border-radius: 8px; padding: 9px 24px; font-size: .9rem; cursor: pointer; transition: background .15s, transform .1s; letter-spacing: .05em; }
+.btn:hover { background: #3a3015; transform: translateY(-1px); }
+#progress-bar { max-width: 640px; width: 100%; height: 4px; background: #1a1e2e; border-radius: 2px; margin-bottom: 10px; overflow: hidden; }
+#progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg,#ffd080,#ffaa30); transition: width .15s; border-radius: 2px; }
+#result { margin-top: 18px; text-align: center; display: none; }
+#result h2 { font-size: 1.5rem; color: #ffd080; margin-bottom: 6px; }
+#result p { color: #6677aa; font-size: .9rem; }
+</style>
+</head>
+<body>
+<h1>SWIFT KEYS</h1>
+<p class="subtitle">Typing Speed Test</p>
+<div class="stats-row">
+  <div class="stat"><div class="stat-value" id="wpm-s">0</div><div class="stat-label">WPM</div></div>
+  <div class="stat"><div class="stat-value" id="acc-s">100%</div><div class="stat-label">Accuracy</div></div>
+  <div class="stat"><div class="stat-value" id="time-s">0s</div><div class="stat-label">Time</div></div>
+</div>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="passage-wrap" id="passage"></div>
+<textarea id="input" rows="3" placeholder="Start typing here..."></textarea>
+<div class="actions">
+  <button class="btn" id="retry-btn">New Passage (Tab)</button>
+</div>
+<div id="result">
+  <h2>✓ Complete!</h2>
+  <p id="result-detail"></p>
+</div>
+<script>
+const PASSAGES=[
+  "The universe is under no obligation to make sense to you. Yet the more we learn about the cosmos, the more the patterns emerge, elegant and precise.",
+  "Light from a star may travel for thousands of years before it reaches your eye. In that moment, the past and present meet in silence.",
+  "Science is not a collection of facts. It is a method of asking questions and designing experiments to answer them as precisely as possible.",
+  "Every atom in your body was forged in the heart of a dying star. You are not just in the universe — the universe is in you.",
+  "To measure is to know. And in knowing the precise motion of a distant world, we understand that the same laws govern all of space and time.",
+  "The sky calls to us. If we do not destroy ourselves, we will one day venture to the stars. A little astronomy takes you out of yourself.",
+  "Somewhere, something incredible is waiting to be known. The cosmos is full of mysteries, and we have only just begun to look."
+];
+let passage='', typed='', timer=null, startTime=null, done=false;
+const passageWrap=document.getElementById('passage-wrap');
+const input=document.getElementById('input');
+function pickPassage(){return PASSAGES[Math.floor(Math.random()*PASSAGES.length)];}
+function render(){
+  passageWrap.innerHTML='';
+  for(let i=0;i<passage.length;i++){
+    const span=document.createElement('span');
+    span.className='char';
+    if(i<typed.length){
+      span.classList.add(typed[i]===passage[i]?'correct':'wrong');
+    } else if(i===typed.length){
+      span.classList.add('cursor');
+    }
+    span.textContent=passage[i]===' '?' ':passage[i];
+    passageWrap.appendChild(span);
+  }
+  const pct=Math.min(100,Math.round(typed.length/passage.length*100));
+  document.getElementById('progress-fill').style.width=pct+'%';
+}
+function calcStats(){
+  if(!startTime)return;
+  const elapsed=(Date.now()-startTime)/1000;
+  const correct=typed.split('').filter((c,i)=>c===passage[i]).length;
+  const wpm=elapsed>0?Math.round((correct/5)/(elapsed/60)):0;
+  const acc=typed.length>0?Math.round(correct/typed.length*100):100;
+  document.getElementById('wpm-s').textContent=wpm;
+  document.getElementById('acc-s').textContent=acc+'%';
+  document.getElementById('time-s').textContent=Math.round(elapsed)+'s';
+  return {wpm,acc,elapsed:Math.round(elapsed)};
+}
+function reset(){
+  clearInterval(timer);
+  passage=pickPassage();
+  typed='';startTime=null;done=false;
+  document.getElementById('wpm-s').textContent=0;
+  document.getElementById('acc-s').textContent='100%';
+  document.getElementById('time-s').textContent='0s';
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('result').style.display='none';
+  input.value='';input.disabled=false;
+  input.placeholder='Start typing here...';
+  render();input.focus();
+}
+input.addEventListener('input',()=>{
+  if(done)return;
+  if(!startTime){startTime=Date.now();timer=setInterval(calcStats,500);}
+  typed=input.value;
+  render();
+  if(typed.length>=passage.length){
+    done=true;clearInterval(timer);
+    const s=calcStats();
+    input.disabled=true;
+    document.getElementById('result').style.display='block';
+    document.getElementById('result-detail').textContent=`${s.wpm} WPM · ${s.acc}% accuracy · ${s.elapsed}s`;
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();reset();}});
+document.getElementById('retry-btn').addEventListener('click',reset);
+reset();
+</script>
+</body>
+</html>

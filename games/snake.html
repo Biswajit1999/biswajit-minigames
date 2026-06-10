@@ -1,0 +1,120 @@
+<!--
+  NEON SERPENT — Snake Game
+  ==========================
+  Instructions:
+    - Arrow Keys or WASD to steer the snake.
+    - Eat the glowing food pellets to grow and score.
+    - Avoid walls and your own tail.
+    - Speed increases every 5 points.
+    - Press Space or click Start to begin.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Serpent — Snake</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0a0a15; color: #d0d8ff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh; padding: 28px 20px; user-select: none;
+}
+h1 { font-size: 1.9rem; letter-spacing: 0.15em; color: #7fff9e; margin-bottom: 4px; }
+.subtitle { font-size: 0.8rem; color: #334455; margin-bottom: 20px; letter-spacing: 0.05em; }
+.stats { display: flex; gap: 36px; margin-bottom: 18px; }
+.stat { text-align: center; }
+.stat-value { font-size: 1.6rem; font-weight: 700; color: #7fff9e; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 0.7rem; color: #334455; text-transform: uppercase; letter-spacing: 0.08em; }
+#canvas { border: 2px solid #1a3a2a; border-radius: 8px; box-shadow: 0 0 30px rgba(60,200,90,.15); display: block; background: #080812; }
+.btn { margin-top: 18px; background: #0d2a18; color: #7fff9e; border: 1px solid #1a5a30; border-radius: 8px; padding: 10px 28px; font-size: .95rem; cursor: pointer; letter-spacing: .05em; transition: background .15s, transform .1s; }
+.btn:hover { background: #133a22; transform: translateY(-1px); }
+.hint { margin-top: 14px; font-size: .75rem; color: #2a3a4a; text-align: center; line-height: 1.6; }
+#canvas-wrap { position: relative; }
+#overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; pointer-events: none; }
+#overlay h2 { font-size: 1.4rem; color: #7fff9e; letter-spacing: .1em; }
+#overlay p { font-size: .85rem; color: #556677; }
+</style>
+</head>
+<body>
+<h1>NEON SERPENT</h1>
+<p class="subtitle">Classic Snake</p>
+<div class="stats">
+  <div class="stat"><div class="stat-value" id="score">0</div><div class="stat-label">Score</div></div>
+  <div class="stat"><div class="stat-value" id="best">0</div><div class="stat-label">Best</div></div>
+  <div class="stat"><div class="stat-value" id="level">1</div><div class="stat-label">Level</div></div>
+</div>
+<div id="canvas-wrap">
+  <canvas id="canvas" width="400" height="400"></canvas>
+  <div id="overlay">
+    <h2 id="ot">NEON SERPENT</h2>
+    <p id="om">Press Space or Start to play</p>
+  </div>
+</div>
+<button class="btn" id="btn">Start Game</button>
+<p class="hint">Arrow Keys / WASD to steer &nbsp;·&nbsp; Speed increases every 5 points</p>
+<script>
+const cv=document.getElementById('canvas'),ctx=cv.getContext('2d');
+const C=20,COLS=20,ROWS=20;
+let snake,dir,nd,food,score,hi=0,loop,running;
+function rand(n){return Math.floor(Math.random()*n);}
+function spawn(){let p;do{p={x:rand(COLS),y:rand(ROWS)};}while(snake.some(s=>s.x===p.x&&s.y===p.y));return p;}
+function speed(){return Math.max(60,160-(Math.floor(score/5))*15);}
+function init(){
+  snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+  dir={x:1,y:0};nd={x:1,y:0};score=0;food=spawn();
+  document.getElementById('score').textContent=0;
+  document.getElementById('level').textContent=1;
+  document.getElementById('overlay').style.display='none';
+}
+function step(){
+  dir=nd;
+  const h={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+  if(h.x<0||h.x>=COLS||h.y<0||h.y>=ROWS||snake.some(s=>s.x===h.x&&s.y===h.y)){
+    clearInterval(loop);running=false;
+    document.getElementById('ot').textContent='GAME OVER';
+    document.getElementById('om').textContent='Score: '+score+' · Best: '+hi;
+    document.getElementById('overlay').style.display='flex';
+    document.getElementById('btn').textContent='Play Again';
+    return;
+  }
+  snake.unshift(h);
+  if(h.x===food.x&&h.y===food.y){
+    score++;if(score>hi){hi=score;document.getElementById('best').textContent=hi;}
+    document.getElementById('score').textContent=score;
+    document.getElementById('level').textContent=Math.floor(score/5)+1;
+    food=spawn();clearInterval(loop);loop=setInterval(step,speed());
+  }else{snake.pop();}
+  draw();
+}
+function draw(){
+  ctx.fillStyle='#080812';ctx.fillRect(0,0,400,400);
+  ctx.fillStyle='#10101e';
+  for(let x=0;x<COLS;x++)for(let y=0;y<ROWS;y++)ctx.fillRect(x*C+C/2-1,y*C+C/2-1,2,2);
+  ctx.save();ctx.shadowBlur=16;ctx.shadowColor='#ff5050';ctx.fillStyle='#ff4444';
+  ctx.beginPath();ctx.arc(food.x*C+C/2,food.y*C+C/2,C/2-3,0,Math.PI*2);ctx.fill();ctx.restore();
+  snake.forEach((s,i)=>{
+    const g=Math.round(180+(1-i/snake.length)*75);
+    ctx.save();ctx.shadowBlur=i===0?14:4;ctx.shadowColor=`rgb(50,${g},80)`;
+    ctx.fillStyle=i===0?'#aaffcc':`rgb(60,${g},90)`;
+    const m=i===0?1:2;
+    ctx.beginPath();ctx.roundRect(s.x*C+m,s.y*C+m,C-m*2,C-m*2,4);ctx.fill();ctx.restore();
+  });
+}
+document.addEventListener('keydown',e=>{
+  const k=e.key;
+  if(k==='ArrowUp'||k==='w'||k==='W'){if(dir.y!==1)nd={x:0,y:-1};}
+  else if(k==='ArrowDown'||k==='s'||k==='S'){if(dir.y!==-1)nd={x:0,y:1};}
+  else if(k==='ArrowLeft'||k==='a'||k==='A'){if(dir.x!==1)nd={x:-1,y:0};}
+  else if(k==='ArrowRight'||k==='d'||k==='D'){if(dir.x!==-1)nd={x:1,y:0};}
+  else if(k===' '){e.preventDefault();if(!running)start();}
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k))e.preventDefault();
+});
+function start(){if(loop)clearInterval(loop);init();running=true;loop=setInterval(step,speed());draw();document.getElementById('btn').textContent='Restart';}
+document.getElementById('btn').addEventListener('click',start);
+ctx.fillStyle='#080812';ctx.fillRect(0,0,400,400);
+</script>
+</body>
+</html>

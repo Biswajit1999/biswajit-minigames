@@ -1,0 +1,158 @@
+<!--
+  COSMOS MATCH — Memory Card Flip
+  ================================
+  Instructions:
+    - Click any card to flip it and reveal the symbol.
+    - Find and match all pairs before the timer runs out.
+    - Fewer moves = higher score.
+    - Choose 4x4 (16 cards) or 6x4 (24 cards) difficulty.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmos Match — Memory Cards</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0c0c1e; color: #d0d8ff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh; padding: 28px 20px; user-select: none;
+}
+h1 { font-size: 1.9rem; letter-spacing: .15em; color: #c8a0ff; margin-bottom: 4px; }
+.subtitle { font-size: .8rem; color: #334; margin-bottom: 20px; letter-spacing: .05em; }
+.controls { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; justify-content: center; }
+.controls label { font-size: .9rem; color: #8899cc; }
+select { background: #1a1a2e; color: #c8a0ff; border: 1px solid #334477; border-radius: 6px; padding: 6px 10px; font-size: .9rem; cursor: pointer; outline: none; }
+.btn { background: #2a1a4e; color: #c8a0ff; border: 1px solid #4a2a8e; border-radius: 8px; padding: 8px 20px; font-size: .9rem; cursor: pointer; transition: background .15s, transform .1s; letter-spacing: .05em; }
+.btn:hover { background: #3a2a6e; transform: translateY(-1px); }
+.stats { display: flex; gap: 32px; margin-bottom: 18px; }
+.stat { text-align: center; }
+.stat-value { font-size: 1.5rem; font-weight: 700; color: #c8a0ff; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: .7rem; color: #445; text-transform: uppercase; letter-spacing: .08em; }
+#grid { display: grid; gap: 8px; margin-bottom: 20px; }
+.card {
+  width: 80px; height: 80px; cursor: pointer; perspective: 600px;
+  transition: transform .1s;
+}
+.card:hover:not(.flipped):not(.matched) { transform: scale(1.05); }
+.card-inner {
+  width: 100%; height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(.25,.8,.25,1);
+  position: relative;
+}
+.card.flipped .card-inner, .card.matched .card-inner { transform: rotateY(180deg); }
+.card-front, .card-back {
+  position: absolute; inset: 0;
+  backface-visibility: hidden;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem;
+}
+.card-front {
+  background: linear-gradient(135deg, #1e1a3e, #160e2e);
+  border: 1px solid #2a1a5e;
+  color: #5544aa;
+}
+.card-front::after {
+  content: '✦';
+  font-size: 1.4rem;
+  color: #3a2a6a;
+}
+.card-back {
+  background: linear-gradient(135deg, #2a1a5e, #1e1040);
+  border: 1px solid #5a3aae;
+  transform: rotateY(180deg);
+}
+.card.matched .card-back {
+  background: linear-gradient(135deg, #1a3a2e, #0e2620);
+  border-color: #3aae70;
+  filter: drop-shadow(0 0 8px rgba(80,200,120,.4));
+}
+#win-msg { display: none; text-align: center; padding: 20px; }
+#win-msg h2 { font-size: 1.6rem; color: #c8a0ff; margin-bottom: 8px; }
+#win-msg p { color: #6677aa; font-size: .9rem; }
+</style>
+</head>
+<body>
+<h1>COSMOS MATCH</h1>
+<p class="subtitle">Memory Card Flip</p>
+<div class="controls">
+  <label for="diff">Difficulty:</label>
+  <select id="diff">
+    <option value="4x4">4 × 4 — Easy (16 cards)</option>
+    <option value="6x4" selected>6 × 4 — Normal (24 cards)</option>
+  </select>
+  <button class="btn" id="new-btn">New Game</button>
+</div>
+<div class="stats">
+  <div class="stat"><div class="stat-value" id="moves-s">0</div><div class="stat-label">Moves</div></div>
+  <div class="stat"><div class="stat-value" id="pairs-s">0</div><div class="stat-label">Pairs</div></div>
+  <div class="stat"><div class="stat-value" id="time-s">0:00</div><div class="stat-label">Time</div></div>
+</div>
+<div id="grid"></div>
+<div id="win-msg">
+  <h2>✦ All Matched!</h2>
+  <p id="win-detail"></p>
+</div>
+<script>
+const SYMBOLS=['🌙','⭐','🪐','☄️','🌌','🔭','🚀','🛸','🌠','💫','🌟','🌀'];
+let cards=[],flipped=[],matched=0,moves=0,pairs,timer,startTime,locked;
+const grid=document.getElementById('grid');
+function fmt(s){return Math.floor(s/60)+':'+(s%60<10?'0':'')+s%60;}
+function newGame(){
+  clearInterval(timer);
+  const val=document.getElementById('diff').value;
+  const [cols,rows]=val.split('x').map(Number);
+  pairs=cols*rows/2;
+  const syms=SYMBOLS.slice(0,pairs);
+  const deck=[...syms,...syms].sort(()=>Math.random()-.5);
+  moves=0;matched=0;locked=false;startTime=null;flipped=[];
+  document.getElementById('moves-s').textContent=0;
+  document.getElementById('pairs-s').textContent=0;
+  document.getElementById('time-s').textContent='0:00';
+  document.getElementById('win-msg').style.display='none';
+  grid.style.gridTemplateColumns=`repeat(${cols}, 80px)`;
+  grid.innerHTML='';
+  cards=deck.map((sym,i)=>{
+    const card=document.createElement('div');
+    card.className='card';
+    card.dataset.sym=sym;card.dataset.idx=i;
+    card.innerHTML=`<div class="card-inner"><div class="card-front"></div><div class="card-back">${sym}</div></div>`;
+    card.addEventListener('click',()=>flip(card));
+    grid.appendChild(card);
+    return card;
+  });
+}
+function flip(card){
+  if(locked||card.classList.contains('flipped')||card.classList.contains('matched'))return;
+  if(!startTime){startTime=Date.now();timer=setInterval(()=>{document.getElementById('time-s').textContent=fmt(Math.floor((Date.now()-startTime)/1000));},500);}
+  card.classList.add('flipped');
+  flipped.push(card);
+  if(flipped.length===2){
+    locked=true;moves++;
+    document.getElementById('moves-s').textContent=moves;
+    const [a,b]=flipped;
+    if(a.dataset.sym===b.dataset.sym){
+      a.classList.add('matched');b.classList.add('matched');
+      matched++;document.getElementById('pairs-s').textContent=matched;
+      flipped=[];locked=false;
+      if(matched===pairs){
+        clearInterval(timer);
+        const elapsed=Math.floor((Date.now()-startTime)/1000);
+        document.getElementById('win-msg').style.display='block';
+        document.getElementById('win-detail').textContent=`${moves} moves · ${fmt(elapsed)}`;
+      }
+    }else{
+      setTimeout(()=>{a.classList.remove('flipped');b.classList.remove('flipped');flipped=[];locked=false;},900);
+    }
+  }
+}
+document.getElementById('new-btn').addEventListener('click',newGame);
+newGame();
+</script>
+</body>
+</html>

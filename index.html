@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biswajit's Mini Games</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a16;
+  --card-bg: #12121f;
+  --border: #1e2035;
+  --text: #d0d8ff;
+  --muted: #44506a;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  padding: 0 0 60px;
+}
+
+/* Header */
+.hero {
+  text-align: center;
+  padding: 60px 24px 48px;
+  background: linear-gradient(180deg, #0d0d20 0%, var(--bg) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(80,80,200,.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  background: linear-gradient(135deg, #a0c4ff, #c8a0ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+}
+.hero p {
+  font-size: 1rem;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+.badge {
+  display: inline-block;
+  margin-top: 18px;
+  background: rgba(100,100,200,.12);
+  border: 1px solid rgba(100,100,200,.25);
+  border-radius: 20px;
+  padding: 5px 16px;
+  font-size: .78rem;
+  color: #7a8ab8;
+  letter-spacing: .04em;
+}
+
+/* Grid */
+.grid {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Card */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 28px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px var(--accent-dim);
+}
+.card-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 10px var(--accent));
+}
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .06em;
+}
+.card-desc {
+  font-size: .88rem;
+  color: var(--muted);
+  line-height: 1.55;
+  flex: 1;
+}
+.card-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.tag {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 4px;
+  padding: 3px 9px;
+  font-size: .72rem;
+  color: #5a6a8a;
+  letter-spacing: .04em;
+}
+.play-row {
+  margin-top: 4px;
+}
+.play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: .9rem;
+  color: var(--accent);
+  text-decoration: none;
+  transition: background .15s, transform .1s;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+.play-btn:hover { background: var(--accent-hover); transform: translateX(2px); }
+.play-btn::after { content: '→'; font-size: 1rem; }
+
+/* Individual accent colours */
+.c-snake  { --accent:#7fff9e; --accent-dim:rgba(127,255,158,.15); --accent-bg:#0d2a18; --accent-border:#1a5a30; --accent-hover:#133a22; }
+.c-memory { --accent:#c8a0ff; --accent-dim:rgba(200,160,255,.15); --accent-bg:#1a1040; --accent-border:#3a206e; --accent-hover:#22184e; }
+.c-typing { --accent:#ffd080; --accent-dim:rgba(255,208,128,.15); --accent-bg:#201800; --accent-border:#5a4010; --accent-hover:#2e2200; }
+.c-breakout{--accent:#60c8ff; --accent-dim:rgba(96,200,255,.15); --accent-bg:#0a1e2e; --accent-border:#1a4060; --accent-hover:#102a40; }
+.c-sliding { --accent:#a0c4ff; --accent-dim:rgba(160,196,255,.15); --accent-bg:#0e1a38; --accent-border:#2a3e70; --accent-hover:#16264a; }
+
+/* Footer */
+footer {
+  text-align: center;
+  margin-top: 52px;
+  font-size: .78rem;
+  color: #2a3245;
+  padding: 0 24px;
+  line-height: 1.8;
+}
+footer a { color: #3a4a70; text-decoration: none; }
+footer a:hover { color: #6677aa; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>MINI GAMES</h1>
+  <p>A small collection of browser games built as a casual learning project. Pick one and play — no installs, no accounts.</p>
+  <span class="badge">Built with AI · Open in any browser</span>
+</div>
+
+<div class="grid">
+
+  <div class="card c-snake" onclick="location.href='games/snake.html'">
+    <div class="card-icon">🐍</div>
+    <div class="card-title">NEON SERPENT</div>
+    <div class="card-desc">Classic snake with a dark neon aesthetic. Steer with arrow keys, eat food, avoid yourself. Speed increases every 5 points.</div>
+    <div class="card-meta">
+      <span class="tag">Arrow Keys</span>
+      <span class="tag">Reflex</span>
+    </div>
+    <div class="play-row">
+      <a class="play-btn" href="games/snake.html">Play</a>
+    </div>
+  </div>
+
+  <div class="card c-memory" onclick="location.href='games/memory-cards.html'">
+    <div class="card-icon">🌌</div>
+    <div class="card-title">COSMOS MATCH</div>
+    <div class="card-desc">Flip cards and find matching emoji pairs. Choose 4×4 (easy) or 6×4 (normal). Fewer moves = better score.</div>
+    <div class="card-meta">
+      <span class="tag">Mouse</span>
+      <span class="tag">Memory</span>
+    </div>
+    <div class="play-row">
+      <a class="play-btn" href="games/memory-cards.html">Play</a>
+    </div>
+  </div>
+
+  <div class="card c-typing" onclick="location.href='games/typing-speed.html'">
+    <div class="card-icon">⌨️</div>
+    <div class="card-title">SWIFT KEYS</div>
+    <div class="card-desc">Type a passage as fast and accurately as possible. WPM and accuracy update in real time. Press Tab to get a new passage.</div>
+    <div class="card-meta">
+      <span class="tag">Keyboard</span>
+      <span class="tag">Speed</span>
+    </div>
+    <div class="play-row">
+      <a class="play-btn" href="games/typing-speed.html">Play</a>
+    </div>
+  </div>
+
+  <div class="card c-breakout" onclick="location.href='games/breakout.html'">
+    <div class="card-icon">🔵</div>
+    <div class="card-title">PHOTON BREAKER</div>
+    <div class="card-desc">Move your paddle with the mouse to bounce the ball and smash bricks. Clear all bricks to advance. Bricks take multiple hits on higher levels.</div>
+    <div class="card-meta">
+      <span class="tag">Mouse</span>
+      <span class="tag">Arcade</span>
+    </div>
+    <div class="play-row">
+      <a class="play-btn" href="games/breakout.html">Play</a>
+    </div>
+  </div>
+
+  <div class="card c-sliding" onclick="location.href='games/sliding-tile.html'">
+    <div class="card-icon">🧩</div>
+    <div class="card-title">GRAVITY SHIFT</div>
+    <div class="card-desc">Slide numbered tiles into order. Choose 3×3, 4×4, or the brutal 5×5 grid. Every shuffle is guaranteed solvable.</div>
+    <div class="card-meta">
+      <span class="tag">Mouse</span>
+      <span class="tag">Puzzle</span>
+    </div>
+    <div class="play-row">
+      <a class="play-btn" href="games/sliding-tile.html">Play</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>biswajit-minigames &nbsp;·&nbsp; 5 games &nbsp;·&nbsp; pure HTML + JS, zero dependencies</p>
+  <p style="margin-top:6px"><a href="https://github.com/biswajitj998/biswajit-minigames" target="_blank">github.com/biswajitj998/biswajit-minigames</a></p>
+</footer>
+
+</body>
+</html>
