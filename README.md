@@ -1,5 +1,7 @@
 # biswajit-minigames
 
+![banner](banner.png)
+
 🌐 **Live:** [biswajit1999.github.io/biswajit-minigames](https://biswajit1999.github.io/biswajit-minigames/)
 
 A small collection of browser mini games I built as part of a casual learning process — spending free time exploring game mechanics, JavaScript canvas, and DOM interactions, with AI assistance along the way.
