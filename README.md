@@ -1,8 +1,10 @@
 # biswajit-minigames
 
+![banner](banner.png)
+
 🌐 **Live:** [biswajit1999.github.io/biswajit-minigames](https://biswajit1999.github.io/biswajit-minigames/)
 
-A growing collection of browser mini games I build in my free time — exploring game mechanics, HTML5 Canvas, and vanilla JS, with AI assistance along the way. A new game gets added regularly.
+A small collection of browser mini games I built as part of a casual learning process — spending free time exploring game mechanics, JavaScript canvas, and DOM interactions, with AI assistance along the way.
 
 All games are **self-contained HTML files** — no build tools, no npm, no server required. Just open any file in a browser and play.
 
