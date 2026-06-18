@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<!--
+  NONOGRAM (Picross) — 2026-06-10
+  How to play:
+    - The numbers on each row/column tell you the lengths of consecutive
+      filled-cell runs in that line, in order, separated by at least one gap.
+    - Left-click a cell to FILL it. Right-click (or toggle the X mode button)
+      to mark a cell as definitely EMPTY (X). Click again to clear.
+    - Fill all the correct cells to reveal the hidden picture pattern and win.
+    - Choose 5x5 (easy) or 10x10 (hard) and hit "New Puzzle" any time.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nonogram — 2026-06-10</title>
+<style>
+  :root {
+    --bg: #11151c;
+    --panel: #1a212c;
+    --grid-line: #3a4556;
+    --grid-bold: #5b6b84;
+    --cell: #222b39;
+    --cell-hover: #2e3a4d;
+    --fill: #5cc8ff;
+    --wrongflash: #ff5c7a;
+    --clue: #9fb3cc;
+    --clue-done: #4f6079;
+    --text: #dde6f2;
+    --accent: #5cc8ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 24px 12px;
+    user-select: none;
+  }
+  h1 { font-size: 1.5rem; letter-spacing: 2px; margin-bottom: 4px; }
+  .sub { color: #8fa1ba; font-size: .85rem; margin-bottom: 16px; }
+  .controls {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 16px; align-items: center;
+  }
+  button, .seg {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--grid-line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  button:hover { background: var(--cell-hover); }
+  button.active { border-color: var(--accent); color: var(--accent); }
+  .stats { display: flex; gap: 18px; margin-bottom: 14px; font-size: .9rem; color: #9fb3cc; }
+  .stats b { color: var(--text); }
+  #boardWrap { display: inline-block; background: var(--panel); padding: 14px; border-radius: 12px; }
+  table { border-collapse: collapse; }
+  td { padding: 0; }
+  .colclue, .rowclue {
+    font-size: 11px;
+    color: var(--clue);
+    text-align: center;
+    vertical-align: bottom;
+    line-height: 1.25;
+    padding: 3px 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rowclue { text-align: right; vertical-align: middle; white-space: nowrap; padding-right: 7px; letter-spacing: 2px; }
+  .clue-done { color: #4f6079; text-decoration: line-through; }
+  .cell {
+    width: var(--cs, 30px); height: var(--cs, 30px);
+    background: var(--cell);
+    border: 1px solid var(--grid-line);
+    cursor: pointer;
+    position: relative;
+    transition: background .08s;
+  }
+  .cell:hover { background: var(--cell-hover); }
+  .cell.filled { background: var(--fill); border-color: var(--fill); }
+  .cell.xmark::after {
+    content: '✕';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #71839e; font-size: calc(var(--cs, 30px) * .5);
+  }
+  .cell.boldL { border-left: 2px solid var(--grid-bold); }
+  .cell.boldT { border-top: 2px solid var(--grid-bold); }
+  .flash { animation: flashRed .35s; }
+  @keyframes flashRed { 0% { background: var(--wrongflash); } 100% { background: var(--cell); } }
+  #message {
+    margin-top: 16px; font-size: 1.05rem; min-height: 1.6em; text-align: center;
+  }
+  #message.win { color: #6ee7a0; font-weight: 600; }
+  .hint { margin-top: 10px; font-size: .78rem; color: #6e8098; max-width: 460px; text-align: center; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <h1>NONOGRAM</h1>
+  <div class="sub">Reveal the hidden pattern from the number clues</div>
+
+  <div class="controls">
+    <button id="size5" class="active">5 × 5</button>
+    <button id="size10">10 × 10</button>
+    <button id="newBtn">⟳ New Puzzle</button>
+    <button id="modeBtn">Mode: Fill ■</button>
+  </div>
+
+  <div class="stats">
+    <span>Mistakes: <b id="mistakes">0</b></span>
+    <span>Time: <b id="timer">0:00</b></span>
+  </div>
+
+  <div id="boardWrap"></div>
+  <div id="message"></div>
+  <div class="hint">Left-click = fill · Right-click = mark ✕ (empty) · Numbers are run-lengths of filled cells in each row/column, in order. A completed line greys out its clues.</div>
+
+<script>
+(function () {
+  let N = 5;
+  let solution = [];   // 2D bool
+  let state = [];      // 0 empty, 1 filled, 2 x-mark
+  let mode = 'fill';   // 'fill' | 'x'
+  let mistakes = 0;
+  let startTime = null;
+  let timerInt = null;
+  let solved = false;
+
+  const wrap = document.getElementById('boardWrap');
+  const msg = document.getElementById('message');
+  const mistakesEl = document.getElementById('mistakes');
+  const timerEl = document.getElementById('timer');
+  const modeBtn = document.getElementById('modeBtn');
+
+  // ---------- puzzle generation ----------
+  function generateSolution(n) {
+    // Random pattern with ~55% density, regenerate if any row/col is empty
+    // (empty lines make boring clues) — keep it solvable-looking.
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const g = [];
+      for (let r = 0; r < n; r++) {
+        g.push([]);
+        for (let c = 0; c < n; c++) g[r].push(Math.random() < 0.55);
+      }
+      // mirror left-right half the time for a "picture" feel
+      if (Math.random() < 0.5) {
+        for (let r = 0; r < n; r++)
+          for (let c = 0; c < Math.floor(n / 2); c++)
+            g[r][n - 1 - c] = g[r][c];
+      }
+      let ok = true;
+      for (let i = 0; i < n; i++) {
+        if (!g[i].some(v => v)) ok = false;
+        if (!g.some(row => row[i])) ok = false;
+      }
+      if (ok) return g;
+    }
+    // fallback: all filled diagonal-ish
+    return Array.from({length: n}, (_, r) =>
+      Array.from({length: n}, (_, c) => (r + c) % 2 === 0));
+  }
+
+  function clues(line) {
+    const out = [];
+    let run = 0;
+    for (const v of line) {
+      if (v) run++;
+      else { if (run) out.push(run); run = 0; }
+    }
+    if (run) out.push(run);
+    return out.length ? out : [0];
+  }
+
+  function rowClues(r) { return clues(solution[r]); }
+  function colClues(c) { return clues(solution.map(row => row[c])); }
+
+  function lineDone(lineState, lineSol) {
+    // line complete when every solution-filled cell is filled by player
+    return lineSol.every((v, i) => !v || lineState[i] === 1);
+  }
+
+  // ---------- rendering ----------
+  function build() {
+    solution = generateSolution(N);
+    state = Array.from({length: N}, () => Array(N).fill(0));
+    mistakes = 0; solved = false;
+    mistakesEl.textContent = '0';
+    msg.textContent = ''; msg.className = '';
+    startTime = Date.now();
+    clearInterval(timerInt);
+    timerInt = setInterval(tick, 500);
+    tick();
+    render();
+  }
+
+  function tick() {
+    const s = Math.floor((Date.now() - startTime) / 1000);
+    timerEl.textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function render() {
+    const cs = N === 5 ? 42 : 30;
+    document.documentElement.style.setProperty('--cs', cs + 'px');
+    const tbl = document.createElement('table');
+
+    // column clue row
+    const trTop = document.createElement('tr');
+    trTop.appendChild(document.createElement('td')); // corner
+    for (let c = 0; c < N; c++) {
+      const td = document.createElement('td');
+      td.className = 'colclue';
+      td.id = 'cc' + c;
+      td.innerHTML = colClues(c).join('<br>');
+      trTop.appendChild(td);
+    }
+    tbl.appendChild(trTop);
+
+    for (let r = 0; r < N; r++) {
+      const tr = document.createElement('tr');
+      const rc = document.createElement('td');
+      rc.className = 'rowclue';
+      rc.id = 'rc' + r;
+      rc.textContent = rowClues(r).join(' ');
+      tr.appendChild(rc);
+      for (let c = 0; c < N; c++) {
+        const td = document.createElement('td');
+        const div = document.createElement('div');
+        div.className = 'cell';
+        if (c % 5 === 0 && c !== 0) div.classList.add('boldL');
+        if (r % 5 === 0 && r !== 0) div.classList.add('boldT');
+        div.dataset.r = r; div.dataset.c = c;
+        div.addEventListener('click', onCell);
+        div.addEventListener('contextmenu', e => { e.preventDefault(); onCell(e, true); });
+        td.appendChild(div);
+        tr.appendChild(td);
+      }
+      tbl.appendChild(tr);
+    }
+    wrap.innerHTML = '';
+    wrap.appendChild(tbl);
+    updateClueStyles();
+  }
+
+  function cellEl(r, c) {
+    return wrap.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+  }
+
+  // ---------- interaction ----------
+  function onCell(e, forceX) {
+    if (solved) return;
+    const el = e.currentTarget;
+    const r = +el.dataset.r, c = +el.dataset.c;
+    const useX = forceX || mode === 'x';
+
+    if (useX) {
+      if (state[r][c] === 1) return; // can't X a confirmed fill
+      state[r][c] = state[r][c] === 2 ? 0 : 2;
+      el.classList.toggle('xmark', state[r][c] === 2);
+      return;
+    }
+
+    if (state[r][c] === 1) return; // already correctly filled
+    if (solution[r][c]) {
+      state[r][c] = 1;
+      el.classList.remove('xmark');
+      el.classList.add('filled');
+      updateClueStyles();
+      checkWin();
+    } else {
+      // wrong guess: flash, count mistake, auto-X it
+      mistakes++;
+      mistakesEl.textContent = mistakes;
+      el.classList.add('flash');
+      setTimeout(() => {
+        el.classList.remove('flash');
+        state[r][c] = 2;
+        el.classList.add('xmark');
+      }, 350);
+    }
+  }
+
+  function updateClueStyles() {
+    for (let r = 0; r < N; r++) {
+      const done = lineDone(state[r], solution[r]);
+      document.getElementById('rc' + r).classList.toggle('clue-done', done);
+    }
+    for (let c = 0; c < N; c++) {
+      const colState = state.map(row => row[c]);
+      const colSol = solution.map(row => row[c]);
+      document.getElementById('cc' + c).classList.toggle('clue-done', lineDone(colState, colSol));
+    }
+  }
+
+  function checkWin() {
+    for (let r = 0; r < N; r++)
+      for (let c = 0; c < N; c++)
+        if (solution[r][c] && state[r][c] !== 1) return;
+    solved = true;
+    clearInterval(timerInt);
+    msg.textContent = '★ Solved in ' + timerEl.textContent + ' with ' + mistakes +
+      (mistakes === 1 ? ' mistake!' : ' mistakes!');
+    msg.className = 'win';
+    // auto-X the remaining empties for a clean reveal
+    for (let r = 0; r < N; r++)
+      for (let c = 0; c < N; c++)
+        if (!solution[r][c]) cellEl(r, c).classList.add('xmark');
+  }
+
+  // ---------- controls ----------
+  document.getElementById('newBtn').addEventListener('click', build);
+  document.getElementById('size5').addEventListener('click', function () {
+    N = 5; setSizeBtn(this); build();
+  });
+  document.getElementById('size10').addEventListener('click', function () {
+    N = 10; setSizeBtn(this); build();
+  });
+  function setSizeBtn(btn) {
+    document.getElementById('size5').classList.remove('active');
+    document.getElementById('size10').classList.remove('active');
+    btn.classList.add('active');
+  }
+  modeBtn.addEventListener('click', () => {
+    mode = mode === 'fill' ? 'x' : 'fill';
+    modeBtn.textContent = mode === 'fill' ? 'Mode: Fill ■' : 'Mode: Mark ✕';
+  });
+
+  build();
+})();
+</script>
+</body>
+</html>

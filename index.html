@@ -3,179 +3,363 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Biswajit's Mini Games</title>
+<title>Biswajit's Mini Games — The Collection</title>
+<meta name="description" content="A curated collection of self-contained browser games. No installs, no accounts — open and play.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
+/* ============================================================
+   THE COLLECTION — premium dark interface, 4K-ready
+   Fluid type & spacing via clamp(); hairline borders stay crisp
+   on high-DPI displays; graceful fallbacks if fonts fail offline.
+   ============================================================ */
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
-  --bg: #0a0a16;
-  --card-bg: #12121f;
-  --border: #1e2035;
-  --text: #d0d8ff;
-  --muted: #44506a;
+  --bg: #07080c;
+  --surface: rgba(255,255,255,.025);
+  --surface-hover: rgba(255,255,255,.045);
+  --hairline: rgba(255,255,255,.08);
+  --hairline-strong: rgba(255,255,255,.14);
+  --text: #e8e6e1;
+  --muted: #8a8f9c;
+  --faint: #555b69;
+  --gold: #d8bc8a;
+  --gold-dim: rgba(216,188,138,.35);
+  --serif: 'Marcellus', 'Palatino Linotype', Georgia, serif;
+  --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
+
+html { scroll-behavior: smooth; }
+
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--sans);
+  font-weight: 300;
   min-height: 100vh;
-  padding: 0 0 60px;
+  padding-bottom: clamp(48px, 5vw, 110px);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-/* Header */
-.hero {
-  text-align: center;
-  padding: 60px 24px 48px;
-  background: linear-gradient(180deg, #0d0d20 0%, var(--bg) 100%);
-  position: relative;
-  overflow: hidden;
+/* Ambient backdrop — slow-drifting light fields, fine grain */
+.backdrop {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
 }
-.hero::before {
+.backdrop::before {
+  content: '';
+  position: absolute; inset: -20%;
+  background:
+    radial-gradient(ellipse 55% 38% at 28% 12%, rgba(99,112,182,.13) 0%, transparent 60%),
+    radial-gradient(ellipse 48% 36% at 75% 28%, rgba(182,142,92,.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 44% at 50% 95%, rgba(72,96,128,.09) 0%, transparent 65%);
+  animation: drift 36s ease-in-out infinite alternate;
+}
+.backdrop::after {
   content: '';
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(80,80,200,.12) 0%, transparent 70%);
-  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+@keyframes drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(2.5%, -2%, 0) scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .backdrop::before { animation: none; }
+  * { transition: none !important; }
+}
+
+/* ============ Hero ============ */
+.hero {
+  text-align: center;
+  padding: clamp(72px, 9vw, 160px) 24px clamp(56px, 6vw, 110px);
+  position: relative;
+}
+.eyebrow {
+  font-size: clamp(.68rem, .65vw, .95rem);
+  letter-spacing: .55em;
+  text-indent: .55em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: .85;
+  margin-bottom: clamp(20px, 2vw, 36px);
+  animation: rise .9s ease both;
 }
 .hero h1 {
-  font-size: 2.8rem;
-  font-weight: 800;
-  letter-spacing: .12em;
-  background: linear-gradient(135deg, #a0c4ff, #c8a0ff);
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 5.2vw, 7rem);
+  letter-spacing: .14em;
+  text-indent: .14em;
+  line-height: 1.08;
+  background: linear-gradient(170deg, #f4f1ea 20%, #cfc6b4 55%, #9d917a 100%);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 12px;
+  -webkit-text-fill-color: transparent;
+  animation: rise .9s .08s ease both;
+}
+.rule {
+  width: clamp(56px, 5vw, 110px);
+  height: 1px;
+  margin: clamp(26px, 2.6vw, 48px) auto;
+  background: linear-gradient(90deg, transparent, var(--gold-dim) 20%, var(--gold) 50%, var(--gold-dim) 80%, transparent);
+  position: relative;
+  animation: rise .9s .16s ease both;
+}
+.rule::after {
+  content: '◆';
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: .5rem;
+  color: var(--gold);
+  background: var(--bg);
+  padding: 0 10px;
 }
 .hero p {
-  font-size: 1rem;
+  font-size: clamp(.92rem, .85vw, 1.25rem);
   color: var(--muted);
-  max-width: 480px;
+  max-width: clamp(440px, 42vw, 760px);
   margin: 0 auto;
-  line-height: 1.6;
+  line-height: 1.85;
+  letter-spacing: .02em;
+  animation: rise .9s .24s ease both;
 }
-.badge {
-  display: inline-block;
-  margin-top: 18px;
-  background: rgba(100,100,200,.12);
-  border: 1px solid rgba(100,100,200,.25);
-  border-radius: 20px;
-  padding: 5px 16px;
-  font-size: .78rem;
-  color: #7a8ab8;
-  letter-spacing: .04em;
+.hero-meta {
+  display: flex;
+  justify-content: center;
+  gap: clamp(20px, 2.4vw, 48px);
+  margin-top: clamp(30px, 3vw, 56px);
+  flex-wrap: wrap;
+  animation: rise .9s .32s ease both;
+}
+.hero-meta span {
+  font-size: clamp(.66rem, .6vw, .88rem);
+  letter-spacing: .28em;
+  text-indent: .28em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.hero-meta span::before {
+  content: '·';
+  color: var(--gold-dim);
+  margin-right: clamp(20px, 2.4vw, 48px);
+}
+.hero-meta span:first-child::before { content: none; margin: 0; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Grid */
-.grid {
-  max-width: 960px;
+/* ============ Gallery ============ */
+.gallery {
+  max-width: clamp(960px, 78vw, 2200px);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 clamp(24px, 3vw, 64px);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(clamp(300px, 24vw, 460px), 1fr));
+  gap: clamp(18px, 1.6vw, 34px);
 }
 
-/* Card */
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px 24px 22px;
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 3px;
+  padding: clamp(30px, 2.6vw, 54px) clamp(26px, 2.2vw, 46px) clamp(24px, 2vw, 40px);
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  transition: border-color .2s, transform .2s, box-shadow .2s;
-  text-decoration: none;
-  color: inherit;
+  gap: clamp(14px, 1.2vw, 24px);
   cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color .35s ease, background .35s ease, transform .35s cubic-bezier(.2,.7,.3,1), box-shadow .35s ease;
+  overflow: hidden;
+}
+.card::before {                /* top accent hairline */
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+.card::after {                 /* corner glow on hover */
+  content: '';
+  position: absolute; top: -40%; right: -25%;
+  width: 70%; aspect-ratio: 1;
+  background: radial-gradient(circle, var(--accent-glow), transparent 65%);
+  opacity: 0;
+  transition: opacity .45s ease;
+  pointer-events: none;
 }
 .card:hover {
-  border-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 32px rgba(0,0,0,.4), 0 0 0 1px var(--accent-dim);
+  background: var(--surface-hover);
+  border-color: var(--hairline-strong);
+  transform: translateY(-5px);
+  box-shadow: 0 24px 60px -18px rgba(0,0,0,.65);
+}
+.card:hover::before, .card:hover::after { opacity: 1; }
+
+.card-index {
+  position: absolute;
+  top: clamp(22px, 1.8vw, 36px);
+  right: clamp(24px, 2vw, 42px);
+  font-family: var(--serif);
+  font-size: clamp(.78rem, .7vw, 1.05rem);
+  letter-spacing: .2em;
+  color: var(--faint);
 }
 .card-icon {
-  font-size: 2.6rem;
-  line-height: 1;
-  filter: drop-shadow(0 0 10px var(--accent));
+  width: clamp(58px, 4.6vw, 92px);
+  height: clamp(58px, 4.6vw, 92px);
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.6rem, 1.4vw, 2.6rem);
+  background: rgba(255,255,255,.02);
+  transition: border-color .35s ease, box-shadow .35s ease;
+}
+.card:hover .card-icon {
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 28px -6px var(--accent-glow), inset 0 0 18px -8px var(--accent-glow);
 }
 .card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--accent);
-  letter-spacing: .06em;
+  font-family: var(--serif);
+  font-size: clamp(1.3rem, 1.15vw, 1.9rem);
+  font-weight: 400;
+  letter-spacing: .16em;
+  color: var(--text);
+  transition: color .35s ease;
 }
+.card:hover .card-title { color: var(--accent); }
 .card-desc {
-  font-size: .88rem;
+  font-size: clamp(.84rem, .74vw, 1.12rem);
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.75;
+  letter-spacing: .015em;
   flex: 1;
 }
 .card-meta {
   display: flex;
-  gap: 8px;
+  gap: clamp(8px, .7vw, 14px);
   flex-wrap: wrap;
 }
 .tag {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 4px;
-  padding: 3px 9px;
-  font-size: .72rem;
-  color: #5a6a8a;
-  letter-spacing: .04em;
+  border: 1px solid var(--hairline);
+  border-radius: 2px;
+  padding: clamp(3px, .3vw, 6px) clamp(10px, .8vw, 16px);
+  font-size: clamp(.6rem, .55vw, .82rem);
+  letter-spacing: .22em;
+  text-indent: .22em;
+  text-transform: uppercase;
+  color: var(--faint);
 }
 .play-row {
-  margin-top: 4px;
+  margin-top: clamp(6px, .6vw, 12px);
+  padding-top: clamp(16px, 1.3vw, 26px);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .play-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--accent-bg);
-  border: 1px solid var(--accent-border);
-  border-radius: 8px;
-  padding: 9px 20px;
-  font-size: .9rem;
+  font-size: clamp(.7rem, .62vw, .95rem);
+  letter-spacing: .32em;
+  text-indent: .32em;
+  text-transform: uppercase;
   color: var(--accent);
   text-decoration: none;
-  transition: background .15s, transform .1s;
-  font-weight: 600;
-  letter-spacing: .04em;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  transition: letter-spacing .3s ease;
 }
-.play-btn:hover { background: var(--accent-hover); transform: translateX(2px); }
-.play-btn::after { content: '→'; font-size: 1rem; }
+.play-btn::after {
+  content: '⟶';
+  font-size: 1.05em;
+  letter-spacing: 0;
+  text-indent: 0;
+  transition: transform .3s ease;
+}
+.card:hover .play-btn { letter-spacing: .4em; text-indent: .4em; }
+.card:hover .play-btn::after { transform: translateX(6px); }
+.play-hint {
+  font-size: clamp(.62rem, .55vw, .82rem);
+  letter-spacing: .14em;
+  color: var(--faint);
+  opacity: 0;
+  transform: translateX(8px);
+  transition: opacity .35s ease, transform .35s ease;
+}
+.card:hover .play-hint { opacity: .8; transform: translateX(0); }
 
-/* Individual accent colours */
-.c-snake  { --accent:#7fff9e; --accent-dim:rgba(127,255,158,.15); --accent-bg:#0d2a18; --accent-border:#1a5a30; --accent-hover:#133a22; }
-.c-memory { --accent:#c8a0ff; --accent-dim:rgba(200,160,255,.15); --accent-bg:#1a1040; --accent-border:#3a206e; --accent-hover:#22184e; }
-.c-typing { --accent:#ffd080; --accent-dim:rgba(255,208,128,.15); --accent-bg:#201800; --accent-border:#5a4010; --accent-hover:#2e2200; }
-.c-breakout{--accent:#60c8ff; --accent-dim:rgba(96,200,255,.15); --accent-bg:#0a1e2e; --accent-border:#1a4060; --accent-hover:#102a40; }
-.c-sliding { --accent:#a0c4ff; --accent-dim:rgba(160,196,255,.15); --accent-bg:#0e1a38; --accent-border:#2a3e70; --accent-hover:#16264a; }
+/* Per-game accents — muted, gallery-grade */
+.c-snake   { --accent:#9fd8ae; --accent-dim:rgba(159,216,174,.4);  --accent-glow:rgba(159,216,174,.14); }
+.c-memory  { --accent:#c3aae8; --accent-dim:rgba(195,170,232,.4);  --accent-glow:rgba(195,170,232,.14); }
+.c-typing  { --accent:#e4c98e; --accent-dim:rgba(228,201,142,.4);  --accent-glow:rgba(228,201,142,.14); }
+.c-breakout{ --accent:#8fc6e8; --accent-dim:rgba(143,198,232,.4);  --accent-glow:rgba(143,198,232,.14); }
+.c-sliding { --accent:#a9bde4; --accent-dim:rgba(169,189,228,.4);  --accent-glow:rgba(169,189,228,.14); }
 
-/* Footer */
+/* ============ Footer ============ */
 footer {
   text-align: center;
-  margin-top: 52px;
-  font-size: .78rem;
-  color: #2a3245;
+  margin-top: clamp(64px, 6vw, 130px);
   padding: 0 24px;
-  line-height: 1.8;
 }
-footer a { color: #3a4a70; text-decoration: none; }
-footer a:hover { color: #6677aa; }
+.footer-rule {
+  width: clamp(56px, 5vw, 110px);
+  height: 1px;
+  margin: 0 auto clamp(26px, 2.4vw, 44px);
+  background: linear-gradient(90deg, transparent, var(--hairline-strong), transparent);
+}
+footer p {
+  font-size: clamp(.66rem, .6vw, .88rem);
+  letter-spacing: .26em;
+  text-indent: .26em;
+  text-transform: uppercase;
+  color: var(--faint);
+  line-height: 2.6;
+}
+footer a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color .3s ease;
+}
+footer a:hover { color: var(--gold); }
+
+@media (max-width: 560px) {
+  .hero h1 { letter-spacing: .08em; text-indent: .08em; }
+  .gallery { grid-template-columns: 1fr; }
+}
 </style>
 </head>
 <body>
 
-<div class="hero">
-  <h1>MINI GAMES</h1>
-  <p>A small collection of browser games built as a casual learning project. Pick one and play — no installs, no accounts.</p>
-  <span class="badge">Built with AI · Open in any browser</span>
-</div>
+<div class="backdrop" aria-hidden="true"></div>
 
-<div class="grid">
+<header class="hero">
+  <div class="eyebrow">Biswajit Jana presents</div>
+  <h1>MINI GAMES</h1>
+  <div class="rule"></div>
+  <p>A curated collection of browser games, each one crafted as a self-contained
+     experience. No installs, no accounts, no dependencies — select a title and play.</p>
+  <div class="hero-meta">
+    <span>Est. 2026</span>
+    <span><span id="game-count-hero"></span> Titles</span>
+    <span>Pure HTML&nbsp;+&nbsp;JS</span>
+  </div>
+</header>
+
+<main class="gallery">
 
   <div class="card c-snake" onclick="location.href='games/snake.html'">
+    <span class="card-index">№ 01</span>
     <div class="card-icon">🐍</div>
     <div class="card-title">NEON SERPENT</div>
     <div class="card-desc">Classic snake with a dark neon aesthetic. Steer with arrow keys, eat food, avoid yourself. Speed increases every 5 points.</div>
@@ -184,11 +368,13 @@ footer a:hover { color: #6677aa; }
       <span class="tag">Reflex</span>
     </div>
     <div class="play-row">
-      <a class="play-btn" href="games/snake.html">Play</a>
+      <a class="play-btn" href="games/snake.html">Enter</a>
+      <span class="play-hint">~2 min rounds</span>
     </div>
   </div>
 
   <div class="card c-memory" onclick="location.href='games/memory-cards.html'">
+    <span class="card-index">№ 02</span>
     <div class="card-icon">🌌</div>
     <div class="card-title">COSMOS MATCH</div>
     <div class="card-desc">Flip cards and find matching emoji pairs. Choose 4×4 (easy) or 6×4 (normal). Fewer moves = better score.</div>
@@ -197,11 +383,13 @@ footer a:hover { color: #6677aa; }
       <span class="tag">Memory</span>
     </div>
     <div class="play-row">
-      <a class="play-btn" href="games/memory-cards.html">Play</a>
+      <a class="play-btn" href="games/memory-cards.html">Enter</a>
+      <span class="play-hint">2 difficulties</span>
     </div>
   </div>
 
   <div class="card c-typing" onclick="location.href='games/typing-speed.html'">
+    <span class="card-index">№ 03</span>
     <div class="card-icon">⌨️</div>
     <div class="card-title">SWIFT KEYS</div>
     <div class="card-desc">Type a passage as fast and accurately as possible. WPM and accuracy update in real time. Press Tab to get a new passage.</div>
@@ -210,11 +398,13 @@ footer a:hover { color: #6677aa; }
       <span class="tag">Speed</span>
     </div>
     <div class="play-row">
-      <a class="play-btn" href="games/typing-speed.html">Play</a>
+      <a class="play-btn" href="games/typing-speed.html">Enter</a>
+      <span class="play-hint">Live WPM</span>
     </div>
   </div>
 
   <div class="card c-breakout" onclick="location.href='games/breakout.html'">
+    <span class="card-index">№ 04</span>
     <div class="card-icon">🔵</div>
     <div class="card-title">PHOTON BREAKER</div>
     <div class="card-desc">Move your paddle with the mouse to bounce the ball and smash bricks. Clear all bricks to advance. Bricks take multiple hits on higher levels.</div>
@@ -223,11 +413,13 @@ footer a:hover { color: #6677aa; }
       <span class="tag">Arcade</span>
     </div>
     <div class="play-row">
-      <a class="play-btn" href="games/breakout.html">Play</a>
+      <a class="play-btn" href="games/breakout.html">Enter</a>
+      <span class="play-hint">Endless levels</span>
     </div>
   </div>
 
   <div class="card c-sliding" onclick="location.href='games/sliding-tile.html'">
+    <span class="card-index">№ 05</span>
     <div class="card-icon">🧩</div>
     <div class="card-title">GRAVITY SHIFT</div>
     <div class="card-desc">Slide numbered tiles into order. Choose 3×3, 4×4, or the brutal 5×5 grid. Every shuffle is guaranteed solvable.</div>
@@ -236,16 +428,25 @@ footer a:hover { color: #6677aa; }
       <span class="tag">Puzzle</span>
     </div>
     <div class="play-row">
-      <a class="play-btn" href="games/sliding-tile.html">Play</a>
+      <a class="play-btn" href="games/sliding-tile.html">Enter</a>
+      <span class="play-hint">3 grid sizes</span>
     </div>
   </div>
 
-</div>
+</main>
 
 <footer>
-  <p>biswajit-minigames &nbsp;·&nbsp; 5 games &nbsp;·&nbsp; pure HTML + JS, zero dependencies</p>
-  <p style="margin-top:6px"><a href="https://github.com/biswajitj998/biswajit-minigames" target="_blank">github.com/biswajitj998/biswajit-minigames</a></p>
+  <div class="footer-rule"></div>
+  <p>biswajit-minigames &nbsp;·&nbsp; <span id="game-count"></span> games &nbsp;·&nbsp; pure HTML + JS, zero dependencies</p>
+  <p><a href="https://github.com/Biswajit1999/biswajit-minigames" target="_blank" rel="noopener">github.com/Biswajit1999/biswajit-minigames</a></p>
 </footer>
+
+<script>
+  // Auto-count game cards so the hero and footer always stay accurate
+  const n = document.querySelectorAll('.card').length;
+  document.getElementById('game-count').textContent = n;
+  document.getElementById('game-count-hero').textContent = n;
+</script>
 
 </body>
 </html>

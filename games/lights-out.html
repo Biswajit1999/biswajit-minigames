@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<!--
+  Lights Out — a classic logic puzzle.
+  Goal: turn every tile OFF. Clicking a tile toggles it AND its
+  four orthogonal neighbors. Every puzzle is generated from a solved
+  board, so it is always solvable. Pick a grid size, then think ahead.
+  Just open this file in any browser — no install needed.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lights Out</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --on: #38bdf8;
+    --on-glow: #0ea5e9;
+    --off: #21262d;
+    --off-edge: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #f0883e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: radial-gradient(circle at 50% -10%, #1b2330, var(--bg));
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    user-select: none;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  h1 .lit { color: var(--on); text-shadow: 0 0 18px var(--on-glow); }
+  .subtitle { color: var(--muted); font-size: 0.92rem; margin-bottom: 22px; }
+  .stats {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 18px;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat { text-align: center; }
+  .stat .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .stat .value { font-size: 1.5rem; font-weight: 700; }
+  #board {
+    display: grid;
+    gap: 8px;
+    padding: 14px;
+    background: var(--panel);
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+  .cell {
+    width: 58px;
+    height: 58px;
+    border-radius: 10px;
+    background: var(--off);
+    border: 1px solid var(--off-edge);
+    cursor: pointer;
+    transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.06s ease;
+  }
+  .cell:hover { transform: scale(0.96); }
+  .cell.on {
+    background: var(--on);
+    border-color: var(--on);
+    box-shadow: 0 0 16px var(--on-glow), inset 0 0 8px rgba(255,255,255,0.4);
+  }
+  .controls {
+    margin-top: 22px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button, select {
+    background: var(--off);
+    color: var(--text);
+    border: 1px solid var(--off-edge);
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  button:hover, select:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #1a1109; font-weight: 600; }
+  .win {
+    margin-top: 18px;
+    font-size: 1.1rem;
+    color: var(--on);
+    font-weight: 600;
+    height: 24px;
+    text-shadow: 0 0 14px var(--on-glow);
+  }
+  .hint { color: var(--muted); font-size: 0.82rem; margin-top: 10px; max-width: 420px; text-align: center; }
+</style>
+</head>
+<body>
+  <h1>Lights <span class="lit">Out</span></h1>
+  <div class="subtitle">Turn every tile off. Each click flips a tile and its neighbors.</div>
+
+  <div class="stats">
+    <div class="stat"><div class="label">Moves</div><div class="value" id="moves">0</div></div>
+    <div class="stat"><div class="label">Lit</div><div class="value" id="lit">0</div></div>
+    <div class="stat"><div class="label">Best</div><div class="value" id="best">—</div></div>
+  </div>
+
+  <div id="board"></div>
+  <div class="win" id="win"></div>
+
+  <div class="controls">
+    <label style="color:var(--muted);font-size:0.85rem;">Size
+      <select id="size">
+        <option value="3">3 × 3</option>
+        <option value="4">4 × 4</option>
+        <option value="5" selected>5 × 5</option>
+        <option value="6">6 × 6</option>
+      </select>
+    </label>
+    <label style="color:var(--muted);font-size:0.85rem;">Difficulty
+      <select id="diff">
+        <option value="0.25">Easy</option>
+        <option value="0.5" selected>Medium</option>
+        <option value="0.8">Hard</option>
+      </select>
+    </label>
+    <button class="primary" id="new">New Puzzle</button>
+  </div>
+  <div class="hint">Tip: order doesn't matter — only whether each tile gets clicked an odd or even number of times. Plan in your head before you commit.</div>
+
+<script>
+  const boardEl = document.getElementById('board');
+  const movesEl = document.getElementById('moves');
+  const litEl   = document.getElementById('lit');
+  const bestEl  = document.getElementById('best');
+  const winEl   = document.getElementById('win');
+  const sizeSel = document.getElementById('size');
+  const diffSel = document.getElementById('diff');
+
+  let N = 5;
+  let grid = [];        // 2D array of booleans (true = lit)
+  let moves = 0;
+  let solved = false;
+  const bests = {};     // key: `${N}` -> best move count
+
+  function idx(r, c) { return r * N + c; }
+
+  function buildBoard() {
+    boardEl.style.gridTemplateColumns = `repeat(${N}, 58px)`;
+    boardEl.innerHTML = '';
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+        cell.addEventListener('click', () => onClick(r, c));
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  function toggle(r, c) {
+    if (r < 0 || c < 0 || r >= N || c >= N) return;
+    grid[r][c] = !grid[r][c];
+  }
+
+  function press(r, c) {
+    toggle(r, c);
+    toggle(r - 1, c);
+    toggle(r + 1, c);
+    toggle(r, c - 1);
+    toggle(r, c + 1);
+  }
+
+  function render() {
+    let litCount = 0;
+    const cells = boardEl.children;
+    for (let r = 0; r < N; r++) {
+      for (let c = 0; c < N; c++) {
+        const on = grid[r][c];
+        if (on) litCount++;
+        cells[idx(r, c)].classList.toggle('on', on);
+      }
+    }
+    litEl.textContent = litCount;
+    movesEl.textContent = moves;
+    return litCount;
+  }
+
+  function onClick(r, c) {
+    if (solved) return;
+    press(r, c);
+    moves++;
+    const lit = render();
+    if (lit === 0) finishWin();
+  }
+
+  function finishWin() {
+    solved = true;
+    const key = String(N);
+    if (bests[key] === undefined || moves < bests[key]) {
+      bests[key] = moves;
+    }
+    bestEl.textContent = bests[key];
+    winEl.textContent = `Solved in ${moves} moves!`;
+  }
+
+  function newPuzzle() {
+    N = parseInt(sizeSel.value, 10);
+    const density = parseFloat(diffSel.value);
+    moves = 0;
+    solved = false;
+    winEl.textContent = '';
+
+    // Start from an all-off board, then apply random presses.
+    // This guarantees the puzzle is solvable.
+    grid = Array.from({ length: N }, () => Array(N).fill(false));
+    const scrambles = Math.max(1, Math.round(N * N * density));
+    let anyLit = false;
+    for (let i = 0; i < scrambles; i++) {
+      const r = Math.floor(Math.random() * N);
+      const c = Math.floor(Math.random() * N);
+      press(r, c);
+    }
+    // Make sure we didn't accidentally land on a solved board.
+    anyLit = grid.some(row => row.some(v => v));
+    if (!anyLit) {
+      press(Math.floor(Math.random() * N), Math.floor(Math.random() * N));
+    }
+
+    bestEl.textContent = bests[String(N)] ?? '—';
+    buildBoard();
+    render();
+  }
+
+  document.getElementById('new').addEventListener('click', newPuzzle);
+  sizeSel.addEventListener('change', newPuzzle);
+  diffSel.addEventListener('change', newPuzzle);
+
+  newPuzzle();
+</script>
+</body>
+</html>

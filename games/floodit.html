@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!--
+  Flood It — color-flood logic puzzle (single file, no server needed)
+  HOW TO PLAY:
+    The board starts as a grid of colored tiles. The flood begins in the
+    TOP-LEFT corner. Each turn, pick a color: every tile connected to the
+    top-left region flips to that color and the flood grows. Fill the entire
+    board with one color before you run out of moves.
+  CONTROLS: click a color swatch (or press keys 1-6). New Game / size / colors below.
+  Just open this file in any browser.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flood It</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#1a2233; --ink:#e8edf6; --muted:#8a97ad;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(1200px 600px at 50% -10%,#1b2740,var(--bg));
+    color:var(--ink); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    display:flex; flex-direction:column; align-items:center; padding:24px 12px;
+  }
+  h1{font-size:26px; letter-spacing:.5px; margin:0 0 4px; font-weight:700}
+  .sub{color:var(--muted); font-size:13px; margin-bottom:18px}
+  .panel{background:var(--panel); border:1px solid #25324a; border-radius:16px;
+    padding:18px; box-shadow:0 10px 40px rgba(0,0,0,.35); max-width:560px; width:100%}
+  .stats{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px}
+  .stat{flex:1; text-align:center; background:#141c2c; border-radius:10px; padding:8px 6px}
+  .stat .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px}
+  .stat .val{font-size:22px; font-weight:700; margin-top:2px}
+  #board{display:grid; gap:3px; margin:0 auto; width:100%; max-width:480px; aspect-ratio:1/1}
+  .cell{border-radius:5px; transition:background .18s ease}
+  .swatches{display:flex; gap:8px; justify-content:center; margin-top:16px; flex-wrap:wrap}
+  .sw{width:52px; height:52px; border-radius:12px; border:2px solid rgba(255,255,255,.12);
+    cursor:pointer; position:relative; transition:transform .08s ease}
+  .sw:hover{transform:translateY(-2px)}
+  .sw:active{transform:translateY(0)}
+  .sw span{position:absolute; bottom:3px; right:5px; font-size:10px; color:rgba(0,0,0,.55); font-weight:700}
+  .controls{display:flex; gap:10px; justify-content:center; margin-top:16px; flex-wrap:wrap}
+  button.ctl{background:#23304a; color:var(--ink); border:1px solid #324560;
+    padding:9px 16px; border-radius:10px; cursor:pointer; font-size:14px}
+  button.ctl:hover{background:#2c3c5c}
+  select{background:#23304a; color:var(--ink); border:1px solid #324560; border-radius:10px; padding:8px; font-size:13px}
+  .row{display:flex; gap:10px; justify-content:center; align-items:center; margin-top:12px; flex-wrap:wrap; color:var(--muted); font-size:13px}
+  .msg{text-align:center; margin-top:14px; min-height:24px; font-size:16px; font-weight:600}
+  .win{color:#6ee7a8} .lose{color:#ff8a8a}
+</style>
+</head>
+<body>
+  <h1>Flood It</h1>
+  <div class="sub">Fill the board with one color before the moves run out.</div>
+  <div class="panel">
+    <div class="stats">
+      <div class="stat"><div class="label">Moves</div><div class="val"><span id="used">0</span>/<span id="max">25</span></div></div>
+      <div class="stat"><div class="label">Filled</div><div class="val"><span id="pct">0</span>%</div></div>
+      <div class="stat"><div class="label">Best</div><div class="val" id="best">&mdash;</div></div>
+    </div>
+    <div id="board"></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="msg" id="msg"></div>
+    <div class="controls">
+      <button class="ctl" id="newgame">New Game</button>
+    </div>
+    <div class="row">
+      Size
+      <select id="size">
+        <option value="12">12 &times; 12</option>
+        <option value="14" selected>14 &times; 14</option>
+        <option value="18">18 &times; 18</option>
+      </select>
+      Colors
+      <select id="colors">
+        <option value="5">5</option>
+        <option value="6" selected>6</option>
+      </select>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const PALETTES = ['#e6492d','#f5a623','#f8e71c','#7ed321','#4a90e2','#bd5fe0'];
+  const boardEl = document.getElementById('board');
+  const swEl = document.getElementById('swatches');
+  const msgEl = document.getElementById('msg');
+  let N, C, maxMoves, used, grid, cells, over, best = {};
+
+  function calcMaxMoves(n,c){ return Math.ceil(n * c * 0.46); }
+
+  function newGame(){
+    N = parseInt(document.getElementById('size').value);
+    C = parseInt(document.getElementById('colors').value);
+    maxMoves = calcMaxMoves(N,C);
+    used = 0; over = false;
+    grid = [];
+    for(let r=0;r<N;r++){ const row=[]; for(let col=0;col<N;col++) row.push(Math.floor(Math.random()*C)); grid.push(row); }
+    document.getElementById('max').textContent = maxMoves;
+    document.getElementById('used').textContent = 0;
+    msgEl.textContent=''; msgEl.className='msg';
+    buildBoard(); buildSwatches(); render(); updateStats();
+  }
+
+  function buildBoard(){
+    boardEl.style.gridTemplateColumns = 'repeat('+N+',1fr)';
+    boardEl.innerHTML=''; cells=[];
+    for(let r=0;r<N;r++){ for(let col=0;col<N;col++){
+      const d=document.createElement('div'); d.className='cell'; boardEl.appendChild(d); cells.push(d);
+    }}
+  }
+
+  function buildSwatches(){
+    swEl.innerHTML='';
+    for(let i=0;i<C;i++){
+      const b=document.createElement('div'); b.className='sw';
+      b.style.background=PALETTES[i];
+      b.innerHTML='<span>'+(i+1)+'</span>';
+      b.onclick=(function(idx){return function(){play(idx);};})(i);
+      swEl.appendChild(b);
+    }
+  }
+
+  function render(){
+    for(let r=0;r<N;r++) for(let col=0;col<N;col++)
+      cells[r*N+col].style.background = PALETTES[grid[r][col]];
+  }
+
+  // tiles connected to top-left sharing its color
+  function regionMask(){
+    const target = grid[0][0];
+    const mask = Array.from({length:N},function(){return Array(N).fill(false);});
+    const st=[[0,0]]; mask[0][0]=true;
+    while(st.length){
+      const cur=st.pop(), r=cur[0], c=cur[1];
+      [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){
+        const nr=r+d[0], nc=c+d[1];
+        if(nr>=0&&nr<N&&nc>=0&&nc<N&&!mask[nr][nc]&&grid[nr][nc]===target){ mask[nr][nc]=true; st.push([nr,nc]); }
+      });
+    }
+    return mask;
+  }
+
+  function play(color){
+    if(over) return;
+    if(color===grid[0][0]) return; // same color: no progress, don't waste a move
+    const mask = regionMask();
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(mask[r][c]) grid[r][c]=color;
+    used++;
+    render(); updateStats();
+    checkEnd();
+  }
+
+  function filledPct(){
+    const mask=regionMask(); let n=0;
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(mask[r][c]) n++;
+    return n/(N*N);
+  }
+
+  function updateStats(){
+    document.getElementById('used').textContent=used;
+    document.getElementById('pct').textContent=Math.round(filledPct()*100);
+    const key=N+'-'+C;
+    document.getElementById('best').textContent = best[key]!=null ? best[key] : '—';
+  }
+
+  function checkEnd(){
+    if(filledPct()>=1){
+      over=true;
+      const key=N+'-'+C;
+      if(best[key]==null||used<best[key]) best[key]=used;
+      msgEl.textContent='Solved in '+used+' moves!';
+      msgEl.className='msg win';
+      updateStats();
+    } else if(used>=maxMoves){
+      over=true;
+      msgEl.textContent='Out of moves — '+Math.round(filledPct()*100)+'% filled. Try again!';
+      msgEl.className='msg lose';
+    }
+  }
+
+  document.addEventListener('keydown',function(e){
+    const k=parseInt(e.key);
+    if(k>=1&&k<=C) play(k-1);
+  });
+  document.getElementById('newgame').onclick=newGame;
+  document.getElementById('size').onchange=newGame;
+  document.getElementById('colors').onchange=newGame;
+  newGame();
+})();
+</script>
+</body>
+</html>

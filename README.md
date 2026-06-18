@@ -1,8 +1,12 @@
 # biswajit-minigames
 
-A small collection of browser mini games I built as part of a casual learning process — spending free time exploring game mechanics, JavaScript canvas, and DOM interactions, with AI assistance along the way.
+🌐 **Live:** [biswajit1999.github.io/biswajit-minigames](https://biswajit1999.github.io/biswajit-minigames/)
+
+A growing collection of browser mini games I build in my free time — exploring game mechanics, HTML5 Canvas, and vanilla JS, with AI assistance along the way. A new game gets added regularly.
 
 All games are **self-contained HTML files** — no build tools, no npm, no server required. Just open any file in a browser and play.
+
+The hub (`index.html`) has a refined dark gallery interface with fluid typography and spacing, so it renders crisply on anything from a laptop screen to a 4K display.
 
 ---
 
@@ -21,11 +25,10 @@ All games are **self-contained HTML files** — no build tools, no npm, no serve
 ## How to play
 
 **Option 1 — Open directly:**  
-Double-click `index.html` to open the game hub, then click any game card.
+Double-click `index.html` to open the game hub, then click any game card. An internet connection is only needed the first time for the hub's fonts — everything else works fully offline.
 
-**Option 2 — GitHub Pages:**  
-Enable GitHub Pages (Settings → Pages → branch: `main`, folder: `/`) and visit  
-`https://<your-username>.github.io/biswajit-minigames/`
+**Option 2 — Live site:**  
+[biswajit1999.github.io/biswajit-minigames](https://biswajit1999.github.io/biswajit-minigames/)
 
 ---
 
@@ -47,7 +50,7 @@ biswajit-minigames/
 
 ## About
 
-This repo is a side project — a casual way to spend free time while picking up bits of HTML5 Canvas, CSS animation, and vanilla JavaScript game loops. Each game was designed and built with AI assistance as part of the learning process. The games are intentionally simple and dependency-free so they stay easy to read, modify, and extend.
+This repo is a side project — a casual way to spend free time while picking up bits of HTML5 Canvas, CSS animation, and vanilla JavaScript game loops. Each game is designed and built with AI assistance as part of the learning process. The collection grows over time; new games get added regularly. Everything is intentionally simple and dependency-free so it stays easy to read, modify, and extend.
 
 ---
 
