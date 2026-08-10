@@ -57,3 +57,7 @@ This repo is a side project — a casual way to spend free time while picking up
 ---
 
 *Biswajit Jana · 2026*
+
+## Research Quality Upgrade
+
+See [RESEARCH_QUALITY.md](RESEARCH_QUALITY.md) for the validation layer, reference anchors, equations and research boundaries added to this repository.
