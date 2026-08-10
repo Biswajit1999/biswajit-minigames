@@ -78,7 +78,7 @@ h1 { font-size: 1.9rem; letter-spacing: .15em; color: #ffd080; margin-bottom: 4p
 </div>
 <div id="progress-bar"><div id="progress-fill"></div></div>
 <div id="passage-wrap" id="passage"></div>
-<textarea id="input" rows="3" placeholder="Start typing here..."></textarea>
+<textarea id="input" rows="3" reference scaffold="Start typing here..."></textarea>
 <div class="actions">
   <button class="btn" id="retry-btn">New Passage (Tab)</button>
 </div>
@@ -137,7 +137,7 @@ function reset(){
   document.getElementById('progress-fill').style.width='0%';
   document.getElementById('result').style.display='none';
   input.value='';input.disabled=false;
-  input.placeholder='Start typing here...';
+  input.reference scaffold='Start typing here...';
   render();input.focus();
 }
 input.addEventListener('input',()=>{
