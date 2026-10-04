@@ -26,10 +26,10 @@ The hub (`index.html`) has a refined dark gallery interface with fluid typograph
 
 ## How to play
 
-**Option 1 — Open directly:**  
+**Option 1 — Open directly:**
 Double-click `index.html` to open the game hub, then click any game card. An internet connection is only needed the first time for the hub's fonts — everything else works fully offline.
 
-**Option 2 — Live site:**  
+**Option 2 — Live site:**
 [biswajit1999.github.io/biswajit-minigames](https://biswajit1999.github.io/biswajit-minigames/)
 
 ---
@@ -57,7 +57,3 @@ This repo is a side project — a casual way to spend free time while picking up
 ---
 
 *Biswajit Jana · 2026*
-
-## Research Quality Upgrade
-
-See [RESEARCH_QUALITY.md](RESEARCH_QUALITY.md) for the validation layer, reference anchors, equations and research boundaries added to this repository.
